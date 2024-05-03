@@ -3,8 +3,9 @@
 	|   INFORMACIÓN  DEL  PROYECTO   |
 	 --------------------------------
 
-	Autores:		+ <matricula1> - <nombre1>
-					+ <matricula2> - <nombre2>
+	Autores:		+ <matricula1> - <Hernández Santiago Marco Antonio>
+					+ <matricula2> - <López Romero José Eduardo>
+                    + <201904864> - <López Viveros Gabriel>
 
 	Propósito:		1. Importar modelos y animaciones 3D en Blender
 					2. Programar una aplicación Web interactiva
