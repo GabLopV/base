@@ -68,7 +68,7 @@ function init() {
     // CREACIPON DE LA MALLA PARA EL PSIO
     const mesh = new THREE.Mesh( new THREE.PlaneBufferGeometry( 10, 10 ), 
                                 // MATERIAL (color)
-                                 new THREE.MeshPhongMaterial( { color: 0x999999, depthWrite: false } ) );
+                                 new THREE.MeshPhongMaterial( { color: 0xff6600, depthWrite: false } ) );
     mesh.rotation.x = - Math.PI / 2;
     scene.add( mesh );
     // CREACIÓN DE CUADRICULA "GUÍA"
