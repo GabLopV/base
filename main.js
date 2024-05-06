@@ -253,7 +253,6 @@ function createGUI( mixamoModel, mixamoAnimations, cicleModel, cicleAnimations )
 
     // SE DEFINE CICLO DE ANIMACIÓN INICIAL
     activeAction = mixamoActions[ 'Atrapa_pelota' ];
-    //activeAction = actions[ 'Pose_correcta' ];
     activeAction.play();
 }
 /** ---------------------------------------------------------------------------------------------
