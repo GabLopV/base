@@ -3,8 +3,8 @@
 	|   INFORMACIÓN  DEL  PROYECTO   |
 	 --------------------------------
 
-	Autores:		+ <matricula1> - <Hernández Santiago Marco Antonio>
-					+ <matricula2> - <López Romero José Eduardo>
+	Autores:		+ <202128383> - <Hernández Santiago Marco Antonio>
+					+ <202044153> - <López Romero José Eduardo>
                     + <201904864> - <López Viveros Gabriel>
 
 	Propósito:		1. Importar modelos y animaciones 3D en Blender
@@ -20,13 +20,18 @@ import { GUI } from './src/jsm/libs/dat.gui.module.js';
 import { OrbitControls } from './src/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from './src/jsm/loaders/GLTFLoader.js';
 
-let container, stats, clock, gui, mixer, actions, activeAction, previousAction;
-let camera, scene, renderer, model;
+let container, stats, clock, gui, mixamoMixer, cicleMixer, cicleActions, mixamoActions, activeAction, previousAction;
+let camera, scene, renderer,  mixamoModel, mixamoAnimations, cicleModel, cicleAnimations;
+
+// OPCIONES (CONSTANTES) PARA MENÚ DE CICLOS
+const ciclos = [ 'Pose_correcta', 'Tiro_correcto', 'Sostener_balon', 'Hacer_tiro', 'Movimiento_muñeca'];
+// OPCIONES (CONSTANTES) PARA MENÚ DE CAPTURAS DE MOVIMIENTO
+const capturas = [ 'Atrapa_pelota', 'Botar_pelota', 'Defensa', 'Salto', 'Idle_defensa' ];
 
 // CONFIGURACIÓN DE PROPIEDAD Y VALOR INICIAL DEL CICLO DE ANIMACIÓN (CLIP)
 // EL NOMBRE DE ESTA PROPIEDAD ('ciclo') ESTÁ VINCULADO CON EL NOMBRE A MOSTRAR EN EL MENÚ
 // i.e. LO QUE SE MUESTRA EN EL MENÚ ES 'ciclo'. 	
-const api = { ciclo: 'Idle' };
+const api = { ciclo: 'Atrapa_pelota' };
 
 init();
 animate();
@@ -78,7 +83,46 @@ function init() {
     // ------------------ MODELO 3D ------------------
 
     const loader = new GLTFLoader();
-    loader.load( './src/models/gltf/RobotExpressive/RobotExpressive.glb', function ( gltf ) {
+    //Carga del primer modelo.
+    loader.load(
+        './src/models/gltf/Poses_basket_propias.glb',
+        function (gltf1) {
+          // SE OBTIENE EL MODELO (scene) DEL ARCHIVO GLTF (.GLB)
+          cicleModel = gltf1.scene;
+          cicleAnimations = gltf1.animations;
+          // SE AGREGA A LA ESCENA PRINCIPAL
+          scene.add(cicleModel);
+          cicleModel.visible = false;
+          console.log(cicleAnimations);
+    
+          // Cargar el segundo modelo
+          loader.load(
+            './src/models/gltf/Poses_basketMixamo.glb',
+            function (gltf2) {
+              // SE OBTIENE EL MODELO (scene) DEL ARCHIVO GLTF (.GLB)
+              mixamoModel = gltf2.scene;
+              mixamoAnimations = gltf2.animations;
+              // SE AGREGA A LA ESCENA PRINCIPAL
+              scene.add(mixamoModel);
+    
+              console.log("Otro Modelo Creado");
+                //Creación de la interfaz gráfica
+              createGUI(mixamoModel, mixamoAnimations, cicleModel, cicleAnimations);
+            },
+            undefined,
+            function (e) {
+              // Manejar errores de carga del segundo modelo
+              console.error("Error al cargar el segundo modelo:", e);
+            }
+          );
+        },
+        undefined,
+        function (e) {
+          // Manejar errores de carga del primer modelo
+          console.error("Error al cargar el primer modelo:", e);
+        }
+      );
+    /*loader.load( './src/models/gltf/RobotExpressive/RobotExpressive.glb', function ( gltf ) {
         // SE OBTIENE EL MODELO (scene) DEL ARCHIVO GLTF (.GLB)
         model = gltf.scene;
         // SE AGREGA A LA ESCENA PRINCIPAL
@@ -90,7 +134,7 @@ function init() {
     }, undefined, function ( e ) {
         // SE MUESTRA INFORMACIÓN DE ERROR
         console.error( e );
-    } );
+    } );*/
 
     // PROCESO DE RENDERIZADO DE LA ESCENA
     renderer = new THREE.WebGLRenderer( { antialias: true } );
@@ -114,31 +158,28 @@ function init() {
     container.appendChild( stats.dom );
 
 }
-
-function createGUI( model, animations ) {
-    // OPCIONES (CONSTANTES) PARA MENÚ DE CICLOS
-    const ciclos = [ 'Idle', 'Walking', 'Running', 'Dance', 'Death', 'Sitting', 'Standing' ];
-    // OPCIONES (CONSTANTES) PARA MENÚ DE CAPTURAS DE MOVIMIENTO
-    const capturas = [ 'Jump', 'Yes', 'No', 'Wave', 'Punch', 'ThumbsUp' ];
-
+//ATENCIÓN AQUÍ PERRO
+function createGUI( mixamoModel, mixamoAnimations, cicleModel, cicleAnimations ) {
     // INSTANCIACIÓN DEL OBJETO QUE CREA LA INTERFAZ
     gui = new GUI();
     // INSTANCIACIÓN DEL OBJETO QUE CONTROLA LA TRANSICIÓN (MEZCLA) ENTRE CLIPS DE ANIMACIÓN
-    mixer = new THREE.AnimationMixer( model );
+    mixamoMixer = new THREE.AnimationMixer(mixamoModel);
+    cicleMixer = new THREE.AnimationMixer( cicleModel );
 
     // ARREGLO VACÍO PARA LOS "CLIPS" DE ANIMACIÓN
-    actions = {};
+    mixamoActions = {};
+    cicleActions = {};
 
     // SE VISUALIZA EN CONSOLA LOS NOMBRES DE LAS ANIMACIONES
     console.log('Lista de animaciones: ');
-    console.log(animations);
+    console.log(mixamoAnimations);
     
     // RECORRIDO DEL ARREGLO DE ANIMACIONES PASADO COMO PARÁMETRO
-    for ( let i = 0; i < animations.length; i ++ ) {
+    for ( let i = 0; i < mixamoAnimations.length; i ++ ) {
         // TRANSFORMACIÓN DE ANIMACIONES A "CLIPS"
-        const clip = animations[ i ];
-        const action = mixer.clipAction( clip );
-        actions[ clip.name ] = action;
+        const clip1 = mixamoAnimations[ i ];
+        const action1 = mixamoMixer.clipAction( clip1 );
+        mixamoActions[ clip1.name ] = action1;
 
         // SE CONFIGURAN LOS CLIPS QUE << NO >> REALIZARÁN UN LOOP INFINITO QUE SON:
         //
@@ -148,21 +189,28 @@ function createGUI( model, animations ) {
         //	2. Sólo 'Death', 'Sitting' y 'Standing' del arreglo ciclos
         // 		--> ciclos.indexOf( clip.name ) >= 4
         //
-        if ( capturas.indexOf( clip.name ) >= 0 || ciclos.indexOf( clip.name ) >= 4 ) {
-            action.clampWhenFinished = true;
-            action.loop = THREE.LoopOnce;
+        if ( capturas.indexOf( clip1.name ) >= 1) {
+            action1.clampWhenFinished = true;
+            action1.loop = THREE.LoopOnce;
         }
+    }
+
+    for (let i = 0; i < cicleAnimations.length; i++) {
+        // TRANSFORMACIÓN DE ANIMACIONES A "CLIPS"
+        const clip = cicleAnimations[i];
+        const action = cicleMixer.clipAction(clip);
+        cicleActions[clip.name] = action;
     }
 
     // ------------------ CICLOS ------------------
     // SE CONFIGURA EL MENÚ PARA SELECCIÓN DE CICLOS
-    const ciclosFolder = gui.addFolder( 'Ciclos de animación' );
+    const ciclosFolder = gui.addFolder( 'Ciclos de Animación' );
     // SE CONFIGURA SUB-MENÚ (LISTA DESPLEGABLE)
     const clipCtrl = ciclosFolder.add( api, 'ciclo' ).options( ciclos );
 
     // SE DEFINE FUNCIÓN TIPO CallBack, EJECUTABLE CADA QUE SE SELECCIONE UNA OPCIÓN DEL MENÚ DESPLEGABLE
     clipCtrl.onChange( function () {
-        console.log('se seleccionó la opción "'+api.ciclo+'""');
+        console.log('Se seleccionó la opción "'+api.ciclo+'""');
         // SEGÚN EL CICLO SELECCIONADO, SE USA SU NOMBRE Y UN VALOR NUMÉRICO (duración)
         fadeToAction( api.ciclo, 0.5 );
     } );
@@ -180,7 +228,8 @@ function createGUI( model, animations ) {
             // SE ACTIVA LA ANIMACIÓN DE LA CAPTURA DE MOVIMIENTO, CON UNA TRANSICIÓN DE 0.2 SEGUNDOS
             fadeToAction( name, 0.2 );
             // SE ESPECIFICA LA FUNCIÓN CallBack QUE REGRESA AL ESTADO PREVIO (ciclo de animación) 
-            mixer.addEventListener( 'finished', restoreState );
+            cicleMixer.addEventListener( 'finished', restoreState );
+            mixamoMixer.addEventListener( 'finished', restoreState );
         };
         // SE LA OPCIÓN CON SU FUNCIÓN Y EL NOMBRE DE LA ANIMACIÓN
         capturaFolder.add( api, name );
@@ -189,7 +238,8 @@ function createGUI( model, animations ) {
     // SE DEFINE FUNCIÓN TIPO CallBack, EJECUTABLE CADA QUE SE FINALICE UNA ACCIÓN
     function restoreState() {
         // SE REMUEVE LA FUNCIÓN CallBack QUE REGRESA AL ESTADO PREVIO (ciclo de animación) 
-        mixer.removeEventListener( 'finished', restoreState );
+        cicleMixer.removeEventListener( 'finished', restoreState );
+        mixamoMixer.removeEventListener( 'finished', restoreState );
         // SE RE-ACTIVA EL CICLO DE ANIMACIÓN ACTUAL, CON UNA TRANSICIÓN DE 0.2 SEGUNDOS
         fadeToAction( api.ciclo, 0.2 );
     }
@@ -202,7 +252,8 @@ function createGUI( model, animations ) {
     capturaFolder.open();
 
     // SE DEFINE CICLO DE ANIMACIÓN INICIAL
-    activeAction = actions[ 'Idle' ];
+    activeAction = mixamoActions[ 'Atrapa_pelota' ];
+    //activeAction = actions[ 'Pose_correcta' ];
     activeAction.play();
 }
 /** ---------------------------------------------------------------------------------------------
@@ -212,7 +263,16 @@ DE PREFERENCIA ***NO MODIFICAR*** LAS SIGUIENTES FUNCIONES A MENOS QUE SEA ESTRI
 // FUNCIÓN PARA EL CONTROL DE TRANSICIONES ENTRE ANIMACIONES
 function fadeToAction( name, duration ) {
     previousAction = activeAction;
-    activeAction = actions[ name ];
+    
+    if (ciclos.includes(name)) {
+        activeAction = cicleActions[name];
+        cicleModel.visible = true;
+        mixamoModel.visible = false;
+    } else {
+        activeAction = mixamoActions[name];
+        mixamoModel.visible = true;
+        cicleModel.visible = false;
+     }
 
     if ( previousAction !== activeAction ) {
         previousAction.fadeOut( duration );
@@ -237,8 +297,11 @@ function onWindowResize() {
 function animate() {
     const dt = clock.getDelta();
 
-    if ( mixer )
-        mixer.update( dt );
+    if ( cicleMixer )
+        cicleMixer.update( dt );
+    
+    if ( mixamoMixer )
+      mixamoMixer.update( dt );
 
     requestAnimationFrame( animate );
     renderer.render( scene, camera );
