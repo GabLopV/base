@@ -20,8 +20,8 @@ import { GUI } from './src/jsm/libs/dat.gui.module.js';
 import { OrbitControls } from './src/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from './src/jsm/loaders/GLTFLoader.js';
 
-let container, stats, clock, gui, mixamoMixer, cicleMixer, cicleActions, mixamoActions, activeAction, previousAction;
-let camera, scene, renderer,  mixamoModel, mixamoAnimations, cicleModel, cicleAnimations;
+let container, stats, clock, gui, mixamo_Mixer, cicle_Mixer, cicle_Actions, mixamo_Actions, active_Action, previousAction;
+let camera, scene, renderer,  mixamo_Model, mixamoAnimations, cicle_Model, cicle_Animations;
 
 // OPCIONES (CONSTANTES) PARA MENÚ DE CICLOS
 const ciclos = [ 'Pose_correcta', 'Tiro_correcto', 'Sostener_balon', 'Hacer_tiro', 'Movimiento_muñeca'];
@@ -49,7 +49,7 @@ function init() {
     // SE CONFIGURA EL COLOR DE FONDO
     scene.background = new THREE.Color( 0x90aede ); //e0e0e0
     // SE CONFIGURA LA NEBLINA
-    scene.fog = new THREE.Fog( 0x90aede, 10, 17 ); //0x90aede, 20, 100
+    scene.fog = new THREE.Fog( 0x90aede, 20, 100 ); //0x90aede, 20, 100 //10 ,17
 
     // SE CREA UN RELOJ
     clock = new THREE.Clock();
@@ -88,26 +88,26 @@ function init() {
         './src/models/gltf/Poses_basket_propias.glb',
         function (gltf1) {
           // SE OBTIENE EL MODELO (scene) DEL ARCHIVO GLTF (.GLB)
-          cicleModel = gltf1.scene;
-          cicleAnimations = gltf1.animations;
+          cicle_Model = gltf1.scene;
+          cicle_Animations = gltf1.animations;
           // SE AGREGA A LA ESCENA PRINCIPAL
-          scene.add(cicleModel);
-          cicleModel.visible = false;
-          console.log(cicleAnimations);
+          scene.add(cicle_Model);
+          cicle_Model.visible = false;
+          console.log(cicle_Animations);
     
           // Cargar el segundo modelo
           loader.load(
-            './src/models/gltf/Poses_basketMixamo.glb',
+            './src/models/gltf/Poses_basket_Mixamo.glb',
             function (gltf2) {
               // SE OBTIENE EL MODELO (scene) DEL ARCHIVO GLTF (.GLB)
-              mixamoModel = gltf2.scene;
+              mixamo_Model = gltf2.scene;
               mixamoAnimations = gltf2.animations;
               // SE AGREGA A LA ESCENA PRINCIPAL
-              scene.add(mixamoModel);
+              scene.add(mixamo_Model);
     
               console.log("Otro Modelo Creado");
                 //Creación de la interfaz gráfica
-              createGUI(mixamoModel, mixamoAnimations, cicleModel, cicleAnimations);
+              createGUI(mixamo_Model, mixamoAnimations, cicle_Model, cicle_Animations);
             },
             undefined,
             function (e) {
@@ -159,16 +159,16 @@ function init() {
 
 }
 //ATENCIÓN AQUÍ PERRO
-function createGUI( mixamoModel, mixamoAnimations, cicleModel, cicleAnimations ) {
+function createGUI( mixamo_Model, mixamoAnimations, cicle_Model, cicle_Animations ) {
     // INSTANCIACIÓN DEL OBJETO QUE CREA LA INTERFAZ
     gui = new GUI();
     // INSTANCIACIÓN DEL OBJETO QUE CONTROLA LA TRANSICIÓN (MEZCLA) ENTRE CLIPS DE ANIMACIÓN
-    mixamoMixer = new THREE.AnimationMixer(mixamoModel);
-    cicleMixer = new THREE.AnimationMixer( cicleModel );
+    mixamo_Mixer = new THREE.AnimationMixer(mixamo_Model);
+    cicle_Mixer = new THREE.AnimationMixer( cicle_Model );
 
     // ARREGLO VACÍO PARA LOS "CLIPS" DE ANIMACIÓN
-    mixamoActions = {};
-    cicleActions = {};
+    mixamo_Actions = {};
+    cicle_Actions = {};
 
     // SE VISUALIZA EN CONSOLA LOS NOMBRES DE LAS ANIMACIONES
     console.log('Lista de animaciones: ');
@@ -178,8 +178,8 @@ function createGUI( mixamoModel, mixamoAnimations, cicleModel, cicleAnimations )
     for ( let i = 0; i < mixamoAnimations.length; i ++ ) {
         // TRANSFORMACIÓN DE ANIMACIONES A "CLIPS"
         const clip1 = mixamoAnimations[ i ];
-        const action1 = mixamoMixer.clipAction( clip1 );
-        mixamoActions[ clip1.name ] = action1;
+        const action1 = mixamo_Mixer.clipAction( clip1 );
+        mixamo_Actions[ clip1.name ] = action1;
 
         // SE CONFIGURAN LOS CLIPS QUE << NO >> REALIZARÁN UN LOOP INFINITO QUE SON:
         //
@@ -194,12 +194,12 @@ function createGUI( mixamoModel, mixamoAnimations, cicleModel, cicleAnimations )
             action1.loop = THREE.LoopOnce;
         }
     }
-
-    for (let i = 0; i < cicleAnimations.length; i++) {
+    //Ciclo para extraer y crear las acciones de animación a partir del clip extraído en la variable "cicle_Animations". 
+    for (let i = 0; i < cicle_Animations.length; i++) {
         // TRANSFORMACIÓN DE ANIMACIONES A "CLIPS"
-        const clip = cicleAnimations[i];
-        const action = cicleMixer.clipAction(clip);
-        cicleActions[clip.name] = action;
+        const clip = cicle_Animations[i];
+        const action = cicle_Mixer.clipAction(clip);
+        cicle_Actions[clip.name] = action;
     }
 
     // ------------------ CICLOS ------------------
@@ -228,8 +228,8 @@ function createGUI( mixamoModel, mixamoAnimations, cicleModel, cicleAnimations )
             // SE ACTIVA LA ANIMACIÓN DE LA CAPTURA DE MOVIMIENTO, CON UNA TRANSICIÓN DE 0.2 SEGUNDOS
             fadeToAction( name, 0.2 );
             // SE ESPECIFICA LA FUNCIÓN CallBack QUE REGRESA AL ESTADO PREVIO (ciclo de animación) 
-            cicleMixer.addEventListener( 'finished', restoreState );
-            mixamoMixer.addEventListener( 'finished', restoreState );
+            cicle_Mixer.addEventListener( 'finished', restoreState );
+            mixamo_Mixer.addEventListener( 'finished', restoreState );
         };
         // SE LA OPCIÓN CON SU FUNCIÓN Y EL NOMBRE DE LA ANIMACIÓN
         capturaFolder.add( api, name );
@@ -238,8 +238,8 @@ function createGUI( mixamoModel, mixamoAnimations, cicleModel, cicleAnimations )
     // SE DEFINE FUNCIÓN TIPO CallBack, EJECUTABLE CADA QUE SE FINALICE UNA ACCIÓN
     function restoreState() {
         // SE REMUEVE LA FUNCIÓN CallBack QUE REGRESA AL ESTADO PREVIO (ciclo de animación) 
-        cicleMixer.removeEventListener( 'finished', restoreState );
-        mixamoMixer.removeEventListener( 'finished', restoreState );
+        cicle_Mixer.removeEventListener( 'finished', restoreState );
+        mixamo_Mixer.removeEventListener( 'finished', restoreState );
         // SE RE-ACTIVA EL CICLO DE ANIMACIÓN ACTUAL, CON UNA TRANSICIÓN DE 0.2 SEGUNDOS
         fadeToAction( api.ciclo, 0.2 );
     }
@@ -252,8 +252,8 @@ function createGUI( mixamoModel, mixamoAnimations, cicleModel, cicleAnimations )
     capturaFolder.open();
 
     // SE DEFINE CICLO DE ANIMACIÓN INICIAL
-    activeAction = mixamoActions[ 'Atrapa_pelota' ];
-    activeAction.play();
+    active_Action = mixamo_Actions[ 'Atrapa_pelota' ];
+    active_Action.play();
 }
 /** ---------------------------------------------------------------------------------------------
 DE PREFERENCIA ***NO MODIFICAR*** LAS SIGUIENTES FUNCIONES A MENOS QUE SEA ESTRICAMENTE NECESARIO
@@ -261,23 +261,23 @@ DE PREFERENCIA ***NO MODIFICAR*** LAS SIGUIENTES FUNCIONES A MENOS QUE SEA ESTRI
 
 // FUNCIÓN PARA EL CONTROL DE TRANSICIONES ENTRE ANIMACIONES
 function fadeToAction( name, duration ) {
-    previousAction = activeAction;
+    previousAction = active_Action;
     
     if (ciclos.includes(name)) {
-        activeAction = cicleActions[name];
-        cicleModel.visible = true;
-        mixamoModel.visible = false;
+        active_Action = cicle_Actions[name];
+        cicle_Model.visible = true;
+        mixamo_Model.visible = false;
     } else {
-        activeAction = mixamoActions[name];
-        mixamoModel.visible = true;
-        cicleModel.visible = false;
+        active_Action = mixamo_Actions[name];
+        mixamo_Model.visible = true;
+        cicle_Model.visible = false;
      }
 
-    if ( previousAction !== activeAction ) {
+    if ( previousAction !== active_Action ) {
         previousAction.fadeOut( duration );
     }
 
-    activeAction
+    active_Action
         .reset()
         .setEffectiveTimeScale( 1 )
         .setEffectiveWeight( 1 )
@@ -296,11 +296,11 @@ function onWindowResize() {
 function animate() {
     const dt = clock.getDelta();
 
-    if ( cicleMixer )
-        cicleMixer.update( dt );
+    if ( cicle_Mixer )
+        cicle_Mixer.update( dt );
     
-    if ( mixamoMixer )
-      mixamoMixer.update( dt );
+    if ( mixamo_Mixer )
+      mixamo_Mixer.update( dt );
 
     requestAnimationFrame( animate );
     renderer.render( scene, camera );
